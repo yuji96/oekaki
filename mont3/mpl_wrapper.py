@@ -33,7 +33,7 @@ class figure:
 
     def __init__(self):
         # TODO: rename lazyaxes
-        self.graphes = {}
+        self.graphes = []
         self.mode = None
 
     def __getitem__(self, key) -> LazyAxes:
@@ -48,7 +48,7 @@ class figure:
 
             # for line layout
             ax = LazyAxes()
-            self.graphes[key] = ax
+            self.graphes.append((key, ax))
             return ax
 
         elif isinstance(key, tuple):
@@ -63,7 +63,7 @@ class figure:
 
             # for table layout
             ax = LazyAxes()
-            self.graphes[key] = ax
+            self.graphes.append((key, ax))
             return ax
 
         else:
@@ -71,7 +71,7 @@ class figure:
                 "Specify an integer or an integer sequence of length 2.")
 
     def show(self, *args, **kwargs):
-        pos, graphes = zip(*self.graphes.items())
+        pos, graphes = zip(*self.graphes)
         if self.mode == "line":
             pos = [(0, c) for c in pos]
 
