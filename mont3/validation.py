@@ -1,3 +1,4 @@
+import re
 import warnings
 from matplotlib.figure import Figure
 
@@ -16,8 +17,14 @@ def validate(fig: Figure, strict=True):
     for i, ax in enumerate(fig.get_axes()):
         results = []
         for check in check_list:
-            if not getattr(ax, f"get_{check}")():
-                results.append(check)
+            target = getattr(ax, f"get_{check}")()
+            if not target:
+                results.append([check, f"without {check}"])
+            elif "label" in check and \
+                    not re.search(r'\[.*\]', target):
+                results.append([check, f"without unit."])
+            getattr(ax, f"set_{check}")(target.replace("[]", ""))
+
         if results:
             all_results[i] = results
 
