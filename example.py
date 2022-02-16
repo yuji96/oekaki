@@ -14,5 +14,3 @@ fig[0, 0].plot(x, np.sin(x))
 fig[1, 1].plot(x, np.cos(x))
 fig[0, 0].plot(x, np.cos(x))
 fig.show()
-
-plt.show()

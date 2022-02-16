@@ -3,30 +3,29 @@ import matplotlib.pyplot as plt
 
 
 class LazyAxes(Axes):
-    # TODO: 使い方正しいかどうか調べる
-    __slots__ = ["name", "args", "kwargs"]
 
     def __init__(self, *args, **kwargs):
-        self.name: str = None
+        self.kind: str = None
         self.args = []
         self.kwargs = {}
 
     def __getattribute__(self, name: str):
-        if name[0] == "_" or name in self.__slots__:
-            return super().__getattribute__(name)
 
         def store(*args, **kwargs):
             self._store(name, args, kwargs)
 
-        return store
+        if name in dir(Axes):
+            return store
 
-    def _store(self, name, args, kwargs):
-        self.name = name
+        return super().__getattribute__(name)
+
+    def _store(self, kind, args, kwargs):
+        self.kind = kind
         self.args = args
         self.kwargs = kwargs
 
     def __repr__(self):
-        return f"<LazyAxes: {self.name}>"
+        return f"<LazyAxes: {self.kind}>"
 
 
 class figure:
@@ -85,6 +84,7 @@ class figure:
         fig, axes = plt.subplots(rmax, cmax)
         for (r, c), graph in zip(pos, graphes):
             ax = axes[r, c] if rmax == 2 else axes[c]
-            getattr(ax, graph.name)(*graph.args, **graph.kwargs)
+            getattr(ax, graph.kind)(*graph.args, **graph.kwargs)
 
-        return fig.show(*args, **kwargs)
+        fig.show(*args, **kwargs)
+        plt.show()
