@@ -43,52 +43,54 @@ class figure(Axes):
             raise TypeError("Single mode is selected."
                             " In single mode, this object is not subscriptable."
                             " ex) fig.plot(...)")
+        if not isinstance(key, (int, tuple)):
+            raise TypeError("Specify an integer or"
+                            " an integer sequence of length 2.")
+        if isinstance(key, tuple) and len(key) != 2:
+            raise ValueError("Specify an integer or"
+                             " an integer sequence of length 2.")
 
+        if self.dim is None:
+            self.dim = self.init_getitem(key)
+
+        if self.dim == 1:
+            if not isinstance(key, int):
+                raise TypeError("Line mode is selected. Specify an integer."
+                                " ex) fig[0].plot(...)")
+
+            key = (0, key)
+        elif self.dim == 2:
+            if not isinstance(key, tuple):
+                raise TypeError("Table mode is selected."
+                                " Specify an integer sequence of length 2."
+                                " ex) fig[0, 0].plot(...)")
+
+        ax = LazyAxes()
+        self.lazyaxes.append((key, ax))
+        return ax
+
+    def init_getitem(self, key):
         if isinstance(key, int):
-            if self.dim == 2:
-                raise ValueError("Table mode is selected."
-                                 " Specify an integer sequence of length 2."
-                                 " ex) fig[0, 0].plot(...)")
-            elif self.dim is None:
-                self.dim = 1
-
-            # for line layout
-            ax = LazyAxes()
-            self.lazyaxes.append(((0, key), ax))
-            return ax
-
+            return 1
         elif isinstance(key, tuple):
-            if self.dim == 1:
-                raise ValueError("Line mode is selected. Specify an integer."
-                                 " ex) fig[0].plot(...)")
-            elif self.dim is None:
-                self.dim = 2
-
-            if len(key) != 2:
-                raise ValueError("Specify an integer or"
-                                 " an integer sequence of length 2.")
-
-            # for table layout
-            ax = LazyAxes()
-            self.lazyaxes.append((key, ax))
-            return ax
-
+            return 2
         else:
             raise TypeError("Specify an integer or"
                             " an integer sequence of length 2.")
 
     def __getattribute__(self, name):
-        if name in dir(Axes):
-            if self.dim is None:
-                self.dim = 0
-            if self.dim != 0:
-                raise AttributeError(
-                    "Single mode is selected. Get axes via indices. ex) fig[0].plot(...)"
-                )
-            ax = LazyAxes()
-            self.lazyaxes.append(((0, 0), ax))
-            return getattr(ax, name)
-        return super().__getattribute__(name)
+        if name not in dir(Axes):
+            return super().__getattribute__(name)
+
+        if self.dim is None:
+            self.dim = 0
+        if self.dim != 0:
+            raise AttributeError(
+                "Single mode is selected. Get axes via indices. ex) fig[0].plot(...)"
+            )
+        ax = LazyAxes()
+        self.lazyaxes.append(((0, 0), ax))
+        return getattr(ax, name)
 
     def show(self, filename=None, *args, **kwargs):
         pos, graphes = zip(*self.lazyaxes)
