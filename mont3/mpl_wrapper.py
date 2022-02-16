@@ -47,7 +47,7 @@ class figure:
 
             # for line layout
             ax = LazyAxes()
-            self.graphes.append((key, ax))
+            self.graphes.append(((0, key), ax))
             return ax
 
         elif isinstance(key, tuple):
@@ -71,8 +71,6 @@ class figure:
 
     def show(self, *args, **kwargs):
         pos, graphes = zip(*self.graphes)
-        if self.mode == "line":
-            pos = [(0, c) for c in pos]
 
         rmax, cmax = 0, 0
         for r, c in pos:
@@ -85,6 +83,8 @@ class figure:
         for (r, c), graph in zip(pos, graphes):
             ax = axes[r, c] if rmax == 2 else axes[c]
             getattr(ax, graph.kind)(*graph.args, **graph.kwargs)
+            ax.grid(True)
 
         fig.show(*args, **kwargs)
+        plt.tight_layout()
         plt.show()
