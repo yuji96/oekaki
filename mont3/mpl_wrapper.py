@@ -57,7 +57,6 @@ class figure(Axes):
             if not isinstance(key, int):
                 raise TypeError("Line mode is selected. Specify an integer."
                                 " ex) fig[0].plot(...)")
-
             key = (0, key)
         elif self.dim == 2:
             if not isinstance(key, tuple):
@@ -95,13 +94,7 @@ class figure(Axes):
     def show(self, filename=None, *args, **kwargs):
         pos, graphes = zip(*self.lazyaxes)
 
-        rmax, cmax = 0, 0
-        for r, c in pos:
-            rmax = r if rmax < r else rmax
-            cmax = c if cmax < c else cmax
-        rmax += 1
-        cmax += 1
-
+        rmax, cmax = map(lambda nums: max(nums) + 1, zip(*pos))
         fig, axes = plt.subplots(rmax, cmax)
         for (r, c), graph in zip(pos, graphes):
             if (rmax, cmax) == (1, 1):
