@@ -1,5 +1,7 @@
-import re
 import warnings
+import re
+
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 
@@ -7,25 +9,25 @@ class Mont3Warning(DeprecationWarning):
     pass
 
 
-def validate(fig: Figure, strict=True):
-    if strict:
-        warnings.simplefilter('error', Mont3Warning)
+class validate:
 
-    check_list = ["xlabel", "ylabel"]
+    def __init__(self, fig: Figure, strict):
+        self.fig = fig
 
-    all_results = {}
-    for i, ax in enumerate(fig.get_axes()):
-        results = []
-        for check in check_list:
-            target = getattr(ax, f"get_{check}")()
+        if strict:
+            warnings.simplefilter('error', Mont3Warning)
+        self.validate()
+
+    def validate(self):
+        for i, ax in enumerate(self.fig.get_axes()):
+            self.validate_labels(ax)
+        warnings.warn("set below", Mont3Warning, stacklevel=4)
+
+    def validate_labels(self, ax: Axes):
+        for var in ["x", "y"]:
+            target = getattr(ax, f"get_{var}label")()
             if not target:
-                results.append([check, f"without {check}"])
-            elif "label" in check and \
-                    not re.search(r'\[.*\]', target):
-                results.append([check, f"without unit."])
-            getattr(ax, f"set_{check}")(target.replace("[]", ""))
-
-        if results:
-            all_results[i] = results
-
-    warnings.warn(f"set below\n\t{str(all_results)}", Mont3Warning, stacklevel=3)
+                warnings.warn("ラベルがない", stacklevel=5)
+            elif not re.search(r'\[.*\]', target):
+                warnings.warn("単位がない", stacklevel=5)
+            getattr(ax, f"set_{var}label")(target.replace("[]", ""))
