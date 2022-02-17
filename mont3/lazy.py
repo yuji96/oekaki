@@ -98,7 +98,7 @@ class figure(Axes):
         self.lazyaxes.append(((0, 0), ax))
         return getattr(ax, name)
 
-    def show(self, filename=None, *args, **kwargs):
+    def _draw(self):
         pos, graphes = zip(*self.lazyaxes)
 
         rmax, cmax = map(lambda nums: max(nums) + 1, zip(*pos))
@@ -114,12 +114,17 @@ class figure(Axes):
             ax.grid(True)
 
         validate(fig, strict=self.strict)
-
+        # TODO: これをオブジェクト指向的にやる方法って無いのかな
         plt.tight_layout()
-        if filename is None:
-            plt.show()
-        else:
-            plt.savefig(filename)
+        return fig, axes
+
+    def show(self):
+        self._draw()
+        plt.show()
+
+    def save(self, filename):
+        self._draw()
+        plt.savefig(filename)
 
     def __str__(self):
         return f"<figure: {id(self)}>"
