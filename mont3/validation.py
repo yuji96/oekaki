@@ -19,6 +19,7 @@ class validate:
 
     def __init__(self, fig: Figure, strict):
         self.fig = fig
+        self.warnings = []
 
         if strict:
             warnings.simplefilter('error', Mont3Warning)
@@ -29,13 +30,23 @@ class validate:
             if not ax.has_data():
                 continue
             self.validate_labels(ax)
-        warnings.warn("set below", Mont3Warning, stacklevel=4)
+        warnings.warn("".join(f'\n{w["geo"]}: {w["msg"]}' for w in self.warnings),
+                      Mont3Warning,
+                      stacklevel=4)
 
     def validate_labels(self, ax: Axes):
+        # TODO: 関数の外側にする？
+        geo = self.calc_geometry(ax)
         for var in ["x", "y"]:
             target = getattr(ax, f"get_{var}label")()
             if not target:
-                warnings.warn("ラベルがない", stacklevel=5)
+                self.warnings.append({"geo": geo, "msg": f"{var}ラベルがない"})
             elif not re.search(r'\[.*\]', target):
-                warnings.warn("単位がない", stacklevel=5)
+                self.warnings.append({"geo": geo, "msg": "単位がない"})
+
             getattr(ax, f"set_{var}label")(target.replace("[]", ""))
+
+    @staticmethod
+    def calc_geometry(ax):
+        _, n_cols, i, _ = ax.get_subplotspec().get_geometry()
+        return divmod(i, n_cols)
