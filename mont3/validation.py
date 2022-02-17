@@ -1,8 +1,14 @@
 import warnings
 import re
+import matplotlib.pyplot as plt
 
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+
+
+def show(strict=True):
+    validate(plt.gcf(), strict)
+    plt.show()
 
 
 class Mont3Warning(DeprecationWarning):
@@ -19,7 +25,9 @@ class validate:
         self.validate()
 
     def validate(self):
-        for i, ax in enumerate(self.fig.get_axes()):
+        for ax in self.fig.get_axes():
+            if not ax.has_data():
+                continue
             self.validate_labels(ax)
         warnings.warn("set below", Mont3Warning, stacklevel=4)
 
