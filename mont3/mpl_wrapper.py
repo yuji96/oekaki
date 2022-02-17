@@ -1,9 +1,17 @@
 from __future__ import annotations
+from enum import Enum
 
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 
 from .validation import validate
+
+
+class Mode(Enum):
+    NONE = -1
+    SINGLE = 0
+    LINE = 1
+    TABLE = 2
 
 
 class LazyAxes(Axes):
@@ -27,7 +35,6 @@ class LazyAxes(Axes):
         return store
 
     def __str__(self):
-        # FIXME: ここが無視されてる
         return f"<LazyAxes: {self.kind}>"
 
 
@@ -35,11 +42,11 @@ class figure(Axes):
 
     def __init__(self, strict=True):
         self.lazyaxes = []
-        self.dim = None
+        self.mode = Mode.NONE
         self.strict = strict
 
     def __getitem__(self, key) -> LazyAxes:
-        if self.dim == 0:
+        if self.mode is Mode.SINGLE:
             raise TypeError("Single mode is selected."
                             " In single mode, this object is not subscriptable."
                             " ex) fig.plot(...)")
@@ -50,15 +57,15 @@ class figure(Axes):
             raise ValueError("Specify an integer or"
                              " an integer sequence of length 2.")
 
-        if self.dim is None:
-            self.dim = self.init_getitem(key)
+        if self.mode is Mode.NONE:
+            self.mode = self.init_getitem(key)
 
-        if self.dim == 1:
+        if self.mode is Mode.LINE:
             if not isinstance(key, int):
                 raise TypeError("Line mode is selected. Specify an integer."
                                 " ex) fig[0].plot(...)")
             key = (0, key)
-        elif self.dim == 2:
+        elif self.mode is Mode.TABLE:
             if not isinstance(key, tuple):
                 raise TypeError("Table mode is selected."
                                 " Specify an integer sequence of length 2."
@@ -70,9 +77,9 @@ class figure(Axes):
 
     def init_getitem(self, key):
         if isinstance(key, int):
-            return 1
+            return Mode.LINE
         elif isinstance(key, tuple):
-            return 2
+            return Mode.TABLE
         else:
             raise TypeError("Specify an integer or"
                             " an integer sequence of length 2.")
@@ -81,9 +88,9 @@ class figure(Axes):
         if name not in dir(Axes):
             return super().__getattribute__(name)
 
-        if self.dim is None:
-            self.dim = 0
-        if self.dim != 0:
+        if self.mode is Mode.NONE:
+            self.mode = Mode.SINGLE
+        if self.mode is not Mode.SINGLE:
             raise AttributeError(
                 "Single mode is selected. Get axes via indices. ex) fig[0].plot(...)"
             )
