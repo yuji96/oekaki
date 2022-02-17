@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from enum import Enum
 
-from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 
 from .validation import validate
 
@@ -91,9 +92,8 @@ class figure(Axes):
         if self.mode is Mode.NONE:
             self.mode = Mode.SINGLE
         if self.mode is not Mode.SINGLE:
-            raise AttributeError(
-                "Single mode is selected. Get axes via indices. ex) fig[0].plot(...)"
-            )
+            raise AttributeError("Single mode is selected."
+                                 " Get axes via indices. ex) fig[0].plot(...)")
         ax = LazyAxes()
         self.lazyaxes.append(((0, 0), ax))
         return getattr(ax, name)
@@ -114,16 +114,17 @@ class figure(Axes):
             ax.grid(True)
 
         validate(fig, strict=self.strict)
-        # TODO: これをオブジェクト指向的にやる方法って無いのかな
-        plt.tight_layout()
         return fig, axes
 
     def show(self):
         self._draw()
+        # TODO: これをオブジェクト指向的にやる方法って無いのかな
+        plt.tight_layout()
         plt.show()
 
     def save(self, filename):
         self._draw()
+        plt.tight_layout()
         plt.savefig(filename)
 
     def __str__(self):
