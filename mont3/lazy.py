@@ -3,7 +3,6 @@ from __future__ import annotations
 from enum import Enum
 
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.axes import Axes
 
 from .validation import validate
@@ -34,6 +33,7 @@ class LazyAxes(Axes):
             self.args = args
             self.kwargs = kwargs
 
+        # TODO: <store:> って表示されるの直したい
         return store
 
     def __str__(self):
@@ -44,51 +44,30 @@ class figure(Axes):
 
     def __init__(self, strict=True):
         self.lazyaxes: list[tuple[tuple, LazyAxes]] = []
+        self.lazyaxes_by_slice: list[tuple[tuple, LazyAxes]] = []
         self.mode = Mode.NONE
         self.strict = strict
 
     def __getitem__(self, key) -> LazyAxes:
-        if self.mode is Mode.SINGLE:
-            raise TypeError("Single mode is selected."
-                            " In single mode, this object is not subscriptable."
-                            " ex) fig.plot(...)")
-        if not isinstance(key, (int, tuple, slice)):
-            raise TypeError("Specify an integer or"
-                            " an integer sequence of length 2.")
-        if isinstance(key, tuple) and len(key) != 2:
-            raise ValueError("Specify an integer or"
-                             " an integer sequence of length 2.")
+        # FIXME: raise error は後で
+        if not isinstance(key, tuple):
+            key = (slice(None), key)
+            # FIXME: 後で1次元だったら転置する。先にテスト書く
+        if len(key) != 2:
+            raise ValueError
 
-        if self.mode is Mode.NONE:
-            self.mode = self.init_getitem(key)
-
-        if self.mode is Mode.LINE:
-            if not isinstance(key, int):
-                raise TypeError("Line mode is selected. Specify an integer."
-                                " ex) fig[0].plot(...)")
-            key = (0, key)
-        elif self.mode is Mode.TABLE:
-            if not isinstance(key, tuple):
-                raise TypeError("Table mode is selected."
-                                " Specify an integer sequence of length 2."
-                                " ex) fig[0, 0].plot(...)")
-
+        # TODO: axes に位置を記憶させたほうが後で楽そう
         ax = LazyAxes()
-        self.lazyaxes.append((key, ax))
+        if any(isinstance(obj, slice) for obj in key):
+            print("self:", self)
+            # FIXME: lineモードは(slice, int)でもelse文に行かせる
+            self.lazyaxes_by_slice.append((key, ax))
+        else:
+            self.lazyaxes.append((key, ax))
         return ax
 
-    def init_getitem(self, key):
-        if isinstance(key, int):
-            return Mode.LINE
-        elif isinstance(key, tuple):
-            return Mode.TABLE
-        elif isinstance(key, slice):
-            return Mode.NONE
-        else:
-            raise TypeError("Specify an integer or"
-                            " an integer sequence of length 2.")
-
     def __getattribute__(self, name):
+        # TODO: slice(None) とみなしたい
         if name not in dir(Axes):
             return super().__getattribute__(name)
 
@@ -102,40 +81,38 @@ class figure(Axes):
         return getattr(ax, name)
 
     def _draw(self):
-        pos, lazyaxes = zip(*self.lazyaxes)
+        # TODO: データがないグラフは消す
+        if self.lazyaxes_by_slice:
+            keys, _ = zip(*self.lazyaxes_by_slice)
+            r_nums, c_nums = zip(*keys)
+            if all(isinstance(r, slice) for r in r_nums):
+                rmax = 1
+                cmax = max(filter(lambda c: isinstance(c, int), c_nums)) + 1
 
-        # FIXME: 縦一列のときにNoneが入ってるっぽい？
-        tuples = filter(lambda obj: isinstance(obj, tuple), pos)
-        rmax, cmax = map(lambda nums: max(nums) + 1, zip(*tuples))
-        fig, axes = plt.subplots(rmax, cmax)
+        # HACK: 行列サイズは、逐次的に計算して属性に持つ
+        if not self.lazyaxes and rmax == 0:
+            raise ValueError("nothing to plot.")
 
-        if isinstance(axes, Axes):
-            axes = np.array(axes)
-        axes = axes.reshape(rmax, cmax)
+        if self.lazyaxes:
+            keys, _ = zip(*self.lazyaxes)
+            rmax, cmax = map(lambda nums: max(nums) + 1, zip(*keys))
+        else:
+            pass
+        fig, axes = plt.subplots(rmax, cmax, squeeze=False)
 
-        # TODO: refactor
-        slices = []
-        for r_c, lazy_ax in zip(pos, lazyaxes):
-            if lazy_ax.kind is None:
-                continue
-            if isinstance(r_c, slice):
-                slices.append((r_c, lazy_ax))
-                continue
+        for key, lazy_ax in self.lazyaxes:
+            if lazy_ax.kind:
+                getattr(axes[key], lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
 
-            getattr(axes[r_c], lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
-
-        unique_axes = fig.get_axes()
-        for ax in unique_axes:
-            if ax.has_data():
-                ax.grid(True)
-        for r_c, lazy_ax in slices:
-            for ax in unique_axes[r_c]:
+        for key, lazy_ax in self.lazyaxes_by_slice:
+            for ax in axes[key].reshape(-1):
                 getattr(ax, lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
 
         validate(fig, strict=self.strict)
         return fig, axes
 
     def show(self):
+        # self[:].grid(True)
         self._draw()
         # TODO: これをオブジェクト指向的にやる方法って無いのかな
         plt.tight_layout()
