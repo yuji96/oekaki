@@ -1,7 +1,29 @@
+import inspect
+import warnings
 from pathlib import Path
 
 import numpy as np
+from matplotlib.testing.compare import calculate_rms
+from mont3.validation import Mont3Warning
 from PIL import Image
+
+
+def compare_figures(test_func):
+
+    def wrapper():
+        warnings.simplefilter("ignore", Mont3Warning)
+
+        expected_img, actual_img = map(convert_to_ndarray, test_func())
+
+        res = calculate_rms(expected_img, actual_img)
+        if res > 0:
+            cf = inspect.currentframe()
+            name = inspect.getframeinfo(cf).function
+            save_diff_image(expected_img, actual_img,
+                            f"tests/failed_cases/{name}.png")
+            raise AssertionError
+
+    return wrapper
 
 
 def convert_to_ndarray(fig):
