@@ -3,9 +3,10 @@ import numpy as np
 
 x = np.linspace(0, 2 * np.pi, 50)
 
-fig = plt.figure()
-fig.plot(x, np.sin(x))
-fig.show()
+# FIXME
+# fig = plt.figure(strict=False)
+# fig.plot(x, np.sin(x))
+# fig.show()
 
 fig = plt.figure(strict=False)
 fig[:].plot(x, np.cos(x))

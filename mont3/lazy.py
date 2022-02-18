@@ -19,7 +19,9 @@ class LazyAxes(Axes):
 
     attrs = ["kind", "args", "kwargs", "__str__"]
 
-    def __init__(self):
+    def __init__(self, geo):
+        self.geo = geo
+
         self.kind: str = None
         self.args = []
         self.kwargs = {}
@@ -47,6 +49,8 @@ class figure(Axes):
         self.lazyaxes_by_slice: list[tuple[tuple, LazyAxes]] = []
         self.mode = Mode.NONE
         self.strict = strict
+        self.rmax = 0
+        self.cmax = 0
 
     def __getitem__(self, key) -> LazyAxes:
         # FIXME: raise error は後で
@@ -56,11 +60,15 @@ class figure(Axes):
         if len(key) != 2:
             raise ValueError
 
-        # TODO: axes に位置を記憶させたほうが後で楽そう
-        ax = LazyAxes()
+        r, c = key
+        if isinstance(r, int):
+            self.rmax = max(self.rmax, r + 1)
+        if isinstance(c, int):
+            self.rmax = max(self.rmax, 1)
+            self.cmax = max(self.cmax, c + 1)
+
+        ax = LazyAxes(geo=key)
         if any(isinstance(obj, slice) for obj in key):
-            print("self:", self)
-            # FIXME: lineモードは(slice, int)でもelse文に行かせる
             self.lazyaxes_by_slice.append((key, ax))
         else:
             self.lazyaxes.append((key, ax))
@@ -76,29 +84,16 @@ class figure(Axes):
         if self.mode is not Mode.SINGLE:
             raise AttributeError("Single mode is selected."
                                  " Get axes via indices. ex) fig[0].plot(...)")
-        ax = LazyAxes()
+        ax = LazyAxes(geo=(0, 0))
         self.lazyaxes.append(((0, 0), ax))
         return getattr(ax, name)
 
     def _draw(self):
         # TODO: データがないグラフは消す
-        if self.lazyaxes_by_slice:
-            keys, _ = zip(*self.lazyaxes_by_slice)
-            r_nums, c_nums = zip(*keys)
-            if all(isinstance(r, slice) for r in r_nums):
-                rmax = 1
-                cmax = max(filter(lambda c: isinstance(c, int), c_nums)) + 1
-
-        # HACK: 行列サイズは、逐次的に計算して属性に持つ
-        if not self.lazyaxes and rmax == 0:
+        if self.rmax == 0:
             raise ValueError("nothing to plot.")
 
-        if self.lazyaxes:
-            keys, _ = zip(*self.lazyaxes)
-            rmax, cmax = map(lambda nums: max(nums) + 1, zip(*keys))
-        else:
-            pass
-        fig, axes = plt.subplots(rmax, cmax, squeeze=False)
+        fig, axes = plt.subplots(self.rmax, self.cmax, squeeze=False)
 
         for key, lazy_ax in self.lazyaxes:
             if lazy_ax.kind:
