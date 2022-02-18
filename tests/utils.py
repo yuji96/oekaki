@@ -1,4 +1,3 @@
-import inspect
 import warnings
 from pathlib import Path
 
@@ -17,10 +16,8 @@ def compare_figures(test_func):
 
         res = calculate_rms(expected_img, actual_img)
         if res > 0:
-            cf = inspect.currentframe()
-            name = inspect.getframeinfo(cf).function
             save_diff_image(expected_img, actual_img,
-                            f"tests/failed_cases/{name}.png")
+                            f"tests/failed_cases/{test_func.__name__}.png")
             raise AssertionError
 
     return wrapper

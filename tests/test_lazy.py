@@ -1,3 +1,4 @@
+from pathlib import Path
 import warnings
 
 import matplotlib
@@ -12,6 +13,9 @@ matplotlib.use('Agg')
 from matplotlib import pyplot  # noqa
 
 warnings.simplefilter("ignore", (Mont3Warning, PytestUnknownMarkWarning))
+
+path = Path(__file__).parent.joinpath("failed_cases")
+[p.unlink() for p in path.glob("*.png") if p.is_file()]
 
 x = np.linspace(0, 2 * np.pi, 50)
 
