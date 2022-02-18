@@ -18,7 +18,7 @@ def compare_figures(test_func):
         if res > 0:
             save_diff_image(expected_img, actual_img,
                             f"tests/failed_cases/{test_func.__name__}.png")
-            raise AssertionError
+            raise AssertionError("over RMES.")
 
     return wrapper
 

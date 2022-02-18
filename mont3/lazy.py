@@ -4,6 +4,7 @@ from enum import Enum
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from numpy import ndarray
 
 from .validation import validate
 
@@ -44,11 +45,12 @@ class LazyAxes(Axes):
 
 class figure(Axes):
 
-    def __init__(self, strict=True):
-        self.lazyaxes: list[tuple[tuple, LazyAxes]] = []
-        self.lazyaxes_by_slice: list[tuple[tuple, LazyAxes]] = []
-        self.mode = Mode.NONE
+    def __init__(self, strict=True, **kwargs):
         self.strict = strict
+        self.kwargs = kwargs
+
+        self.lazyaxes: list[tuple[tuple, LazyAxes]] = []
+        self.mode = Mode.NONE
         self.rmax = 0
         self.cmax = 0
 
@@ -68,10 +70,7 @@ class figure(Axes):
             self.cmax = max(self.cmax, c + 1)
 
         ax = LazyAxes(geo=key)
-        if any(isinstance(obj, slice) for obj in key):
-            self.lazyaxes_by_slice.append((key, ax))
-        else:
-            self.lazyaxes.append((key, ax))
+        self.lazyaxes.append((key, ax))
         return ax
 
     def __getattribute__(self, name):
@@ -93,15 +92,18 @@ class figure(Axes):
         if self.rmax == 0:
             raise ValueError("nothing to plot.")
 
-        fig, axes = plt.subplots(self.rmax, self.cmax, squeeze=False)
+        fig, axes = plt.subplots(self.rmax, self.cmax, squeeze=False, **self.kwargs)
 
         for key, lazy_ax in self.lazyaxes:
-            if lazy_ax.kind:
-                getattr(axes[key], lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
+            if not lazy_ax.kind:
+                continue
 
-        for key, lazy_ax in self.lazyaxes_by_slice:
-            for ax in axes[key].reshape(-1):
-                getattr(ax, lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
+            sliced_axes = axes[key]
+            if isinstance(sliced_axes, ndarray):
+                for ax in sliced_axes.reshape(-1):
+                    getattr(ax, lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
+            else:
+                getattr(sliced_axes, lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
 
         validate(fig, strict=self.strict)
         return fig, axes

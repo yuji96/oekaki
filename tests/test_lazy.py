@@ -39,7 +39,6 @@ def test_line():
     expected, axes = pyplot.subplots(1, 2)
     ax = axes[1]
     ax.plot(x, np.sin(x))
-    ax.grid(True)
     ax.set(xlabel="あ", ylabel="い")
 
     actual = mont3.figure(strict=False)
@@ -54,7 +53,6 @@ def test_table():
     expected, axes = pyplot.subplots(2, 2)
     ax = axes[1, 1]
     ax.plot(x, np.sin(x))
-    ax.grid(True)
     ax.set(xlabel="あ", ylabel="い")
 
     actual = mont3.figure(strict=False)
