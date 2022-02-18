@@ -24,13 +24,12 @@ x = np.linspace(0, 2 * np.pi, 50)
 def test_single():
     expected, ax = pyplot.subplots(1, 1)
     ax.plot(x, np.sin(x))
-    ax.grid(True)
     ax.set(xlabel="あ", ylabel="い")
 
     actual = mont3.figure(strict=False)
     actual.plot(x, np.sin(x))
     actual.set(xlabel="あ", ylabel="い")
-    actual, axes = actual._draw()
+    actual, _ = actual._draw()
     return expected, actual
 
 
@@ -44,7 +43,7 @@ def test_line():
     actual = mont3.figure(strict=False)
     actual[1].plot(x, np.sin(x))
     actual[1].set(xlabel="あ", ylabel="い")
-    actual, axes = actual._draw()
+    actual, _ = actual._draw()
     return expected, actual
 
 
@@ -58,7 +57,7 @@ def test_table():
     actual = mont3.figure(strict=False)
     actual[1, 1].plot(x, np.sin(x))
     actual[1, 1].set(xlabel="あ", ylabel="い")
-    actual, axes = actual._draw()
+    actual, _ = actual._draw()
     return expected, actual
 
 

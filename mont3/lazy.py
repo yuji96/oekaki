@@ -51,8 +51,8 @@ class figure(Axes):
 
         self.lazyaxes: list[tuple[tuple, LazyAxes]] = []
         self.mode = Mode.NONE
-        self.rmax = 0
-        self.cmax = 0
+        self.rmax = 1
+        self.cmax = 1
 
     def __getitem__(self, key) -> LazyAxes:
         # FIXME: raise error は後で
@@ -74,23 +74,12 @@ class figure(Axes):
         return ax
 
     def __getattribute__(self, name):
-        # TODO: slice(None) とみなしたい
         if name not in dir(Axes):
             return super().__getattribute__(name)
-
-        if self.mode is Mode.NONE:
-            self.mode = Mode.SINGLE
-        if self.mode is not Mode.SINGLE:
-            raise AttributeError("Single mode is selected."
-                                 " Get axes via indices. ex) fig[0].plot(...)")
-        ax = LazyAxes(geo=(0, 0))
-        self.lazyaxes.append(((0, 0), ax))
-        return getattr(ax, name)
+        return getattr(self[:], name)
 
     def _draw(self):
         # TODO: データがないグラフは消す
-        if self.rmax == 0:
-            raise ValueError("nothing to plot.")
 
         fig, axes = plt.subplots(self.rmax, self.cmax, squeeze=False, **self.kwargs)
 
