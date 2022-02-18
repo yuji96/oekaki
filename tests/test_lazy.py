@@ -64,4 +64,22 @@ def test_table():
     return expected, actual
 
 
+@compare_figures
+def test_table_all_slice():
+    expected, axes = pyplot.subplots(2, 2)
+    ax = axes[1, 1]
+    for ax in axes.reshape(-1):
+        ax.set(xlabel="あ", ylabel="い")
+    ax.plot(x, np.sin(x))
+    ax.grid(True)
+
+    actual = mont3.figure(strict=False)
+    actual[:].set(xlabel="あ", ylabel="い")
+    actual[1, 1].plot(x, np.sin(x))
+    # TODO: ↓失敗する
+    # actual[:].set(xlabel="あ", ylabel="い")
+    actual, axes = actual._draw()
+    return expected, actual
+
+
 # TODO: test validations

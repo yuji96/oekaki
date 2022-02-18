@@ -34,7 +34,7 @@ class validate:
             warnings.warn("".join(f'\n{w["geo"]}: {w["msg"]}'
                                   for w in self.warnings),
                           Mont3Warning,
-                          stacklevel=4)
+                          stacklevel=5)
 
     def validate_labels(self, ax: Axes):
         # TODO: 関数の外側にする？

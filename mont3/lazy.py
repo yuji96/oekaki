@@ -3,6 +3,7 @@ from __future__ import annotations
 from enum import Enum
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.axes import Axes
 
 from .validation import validate
@@ -51,7 +52,7 @@ class figure(Axes):
             raise TypeError("Single mode is selected."
                             " In single mode, this object is not subscriptable."
                             " ex) fig.plot(...)")
-        if not isinstance(key, (int, tuple)):
+        if not isinstance(key, (int, tuple, slice)):
             raise TypeError("Specify an integer or"
                             " an integer sequence of length 2.")
         if isinstance(key, tuple) and len(key) != 2:
@@ -81,6 +82,8 @@ class figure(Axes):
             return Mode.LINE
         elif isinstance(key, tuple):
             return Mode.TABLE
+        elif isinstance(key, slice):
+            return Mode.NONE
         else:
             raise TypeError("Specify an integer or"
                             " an integer sequence of length 2.")
@@ -101,22 +104,33 @@ class figure(Axes):
     def _draw(self):
         pos, lazyaxes = zip(*self.lazyaxes)
 
-        rmax, cmax = map(lambda nums: max(nums) + 1, zip(*pos))
+        # FIXME: 縦一列のときにNoneが入ってるっぽい？
+        tuples = filter(lambda obj: isinstance(obj, tuple), pos)
+        rmax, cmax = map(lambda nums: max(nums) + 1, zip(*tuples))
         fig, axes = plt.subplots(rmax, cmax)
-        for (r, c), lazy_ax in zip(pos, lazyaxes):
-            if (rmax, cmax) == (1, 1):
-                ax = axes
-            elif rmax == 1:
-                ax = axes[c]
-            else:
-                # FIXME: 縦一列のときは配列が1次元だからバグる
-                ax = axes[r, c]
-            # FIXME: ただ参照しただけの場合は kind が None になるっぽい
+
+        if isinstance(axes, Axes):
+            axes = np.array(axes)
+        axes = axes.reshape(rmax, cmax)
+
+        # TODO: refactor
+        slices = []
+        for r_c, lazy_ax in zip(pos, lazyaxes):
             if lazy_ax.kind is None:
                 continue
+            if isinstance(r_c, slice):
+                slices.append((r_c, lazy_ax))
+                continue
 
-            getattr(ax, lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
-            ax.grid(True)
+            getattr(axes[r_c], lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
+
+        unique_axes = fig.get_axes()
+        for ax in unique_axes:
+            if ax.has_data():
+                ax.grid(True)
+        for r_c, lazy_ax in slices:
+            for ax in unique_axes[r_c]:
+                getattr(ax, lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
 
         validate(fig, strict=self.strict)
         return fig, axes
