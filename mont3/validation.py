@@ -1,7 +1,7 @@
-import warnings
 import re
-import matplotlib.pyplot as plt
+import warnings
 
+import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
@@ -30,9 +30,11 @@ class validate:
             if not ax.has_data():
                 continue
             self.validate_labels(ax)
-        warnings.warn("".join(f'\n{w["geo"]}: {w["msg"]}' for w in self.warnings),
-                      Mont3Warning,
-                      stacklevel=4)
+        if self.warnings:
+            warnings.warn("".join(f'\n{w["geo"]}: {w["msg"]}'
+                                  for w in self.warnings),
+                          Mont3Warning,
+                          stacklevel=4)
 
     def validate_labels(self, ax: Axes):
         # TODO: 関数の外側にする？

@@ -42,7 +42,7 @@ class LazyAxes(Axes):
 class figure(Axes):
 
     def __init__(self, strict=True):
-        self.lazyaxes = []
+        self.lazyaxes: list[tuple[tuple, LazyAxes]] = []
         self.mode = Mode.NONE
         self.strict = strict
 
@@ -99,18 +99,23 @@ class figure(Axes):
         return getattr(ax, name)
 
     def _draw(self):
-        pos, graphes = zip(*self.lazyaxes)
+        pos, lazyaxes = zip(*self.lazyaxes)
 
         rmax, cmax = map(lambda nums: max(nums) + 1, zip(*pos))
         fig, axes = plt.subplots(rmax, cmax)
-        for (r, c), graph in zip(pos, graphes):
+        for (r, c), lazy_ax in zip(pos, lazyaxes):
             if (rmax, cmax) == (1, 1):
                 ax = axes
             elif rmax == 1:
                 ax = axes[c]
             else:
+                # FIXME: 縦一列のときは配列が1次元だからバグる
                 ax = axes[r, c]
-            getattr(ax, graph.kind)(*graph.args, **graph.kwargs)
+            # FIXME: ただ参照しただけの場合は kind が None になるっぽい
+            if lazy_ax.kind is None:
+                continue
+
+            getattr(ax, lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
             ax.grid(True)
 
         validate(fig, strict=self.strict)
