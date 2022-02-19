@@ -43,8 +43,9 @@ class validate:
         for var in ["x", "y"]:
             target = getattr(ax, f"get_{var}label")()
             if not target:
-                self.warnings.append({"geo": geo, "msg": f"{var}ラベルがない"})
+                self.warnings.append({"geo": geo, "msg": f"No {var}-label."})
             elif not re.search(r'\[.*\]', target):
+                # TODO: English
                 self.warnings.append({"geo": geo, "msg": "単位がない"})
 
             getattr(ax, f"set_{var}label")(target.replace("[]", ""))

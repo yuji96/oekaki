@@ -1,4 +1,7 @@
 from .lazy import *  # noqa
 from .validation import *  # noqa
 
-import japanize_matplotlib  # noqa isort: skip
+try:
+    import japanize_matplotlib  # noqa isort: skip
+except ModuleNotFoundError:
+    pass
