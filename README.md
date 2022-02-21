@@ -1,6 +1,6 @@
 # Oekaki
 
-matplotlib extension for me (... and you).
+Lazy on demand subplots.
 
 # Features
 
@@ -11,7 +11,7 @@ matplotlib extension for me (... and you).
 
 # Demo
 
-img
+<img src="https://raw.githubusercontent.com/yuji96/oekaki/main/examples/readme.png" width="500px" >
 
 ```python
 import numpy as np
@@ -49,16 +49,17 @@ examples/readme.py:16: Mont3Warning:
 
 # Requirement
 
-- matplotlib
+- [matplotlib](https://pypi.org/project/matplotlib/)
 
 # Installation
 
 ```
-pip install git+git@github.com:yuji96/oekaki.git
-# in the future, `pip install oekaki`
+pip install oekaki
 ```
-
-todo: `oekaki[ja]`
+If you want to also install [japanize-matplotlib](https://pypi.org/project/japanize-matplotlib/), run below.
+```
+pip install "oekaki[ja]"
+```
 
 # Usage
 
