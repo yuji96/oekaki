@@ -4,7 +4,7 @@ from pathlib import Path
 import matplotlib
 import numpy as np
 import oekaki
-from oekaki.validation import Mont3Warning
+from oekaki.validation import MisleadingWarning
 from pytest import PytestUnknownMarkWarning
 
 from tests.utils import compare_figures
@@ -12,7 +12,7 @@ from tests.utils import compare_figures
 matplotlib.use('Agg')
 from matplotlib import pyplot  # noqa
 
-warnings.simplefilter("ignore", (Mont3Warning, PytestUnknownMarkWarning))
+warnings.simplefilter("ignore", (MisleadingWarning, PytestUnknownMarkWarning))
 
 path = Path(__file__).parent.joinpath("failed_cases")
 [p.unlink() for p in path.glob("*.png") if p.is_file()]

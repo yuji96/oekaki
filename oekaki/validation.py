@@ -11,8 +11,7 @@ def show(strict=True):
     plt.show()
 
 
-# TODO: rename
-class Mont3Warning(DeprecationWarning):
+class MisleadingWarning(DeprecationWarning):
     pass
 
 
@@ -23,7 +22,7 @@ class validate:
         self.warnings = []
 
         if strict:
-            warnings.simplefilter('error', Mont3Warning)
+            warnings.simplefilter('error', MisleadingWarning)
         self.validate()
 
     def validate(self):
@@ -32,10 +31,9 @@ class validate:
                 continue
             self.validate_labels(ax)
         if self.warnings:
-            warnings.warn("".join(f'\n{w["geo"]}: {w["msg"]}'
-                                  for w in self.warnings),
-                          Mont3Warning,
-                          stacklevel=5)
+            warnings.warn(
+                "".join(f'\n{w["geo"]}: {w["msg"]}' for w in self.warnings),
+                MisleadingWarning, stacklevel=5)
 
     def validate_labels(self, ax: Axes):
         # TODO: 関数の外側にする？

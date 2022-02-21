@@ -10,7 +10,3 @@ fig[0, :].grid(True)
 fig[1, 1].fill(r * np.cos(theta), r * np.sin(theta), color="#2ce62c")
 fig[1, 1].set(aspect="equal", title="俺流 matplotlib")
 fig.show()
-# out:
-# examples/readme.py:20: Mont3Warning:
-# (1, 1): No x-label.
-# (1, 1): No y-label.

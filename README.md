@@ -32,16 +32,12 @@ theta = np.linspace(0, np.pi, 300)
 r = np.abs(np.tan(theta))**(1 / np.abs(np.tan(theta)))
 fig[1, 1].fill(r * np.cos(theta), r * np.sin(theta), color="#2ce62c")
 fig.show()
-# out:
-# examples/readme.py:20: Mont3Warning:
-# (1, 1): No x-label.
-# (1, 1): No y-label.
 ```
 
 3️⃣: This code raises the following warnings.
 
 ```
-examples/readme.py:16: Mont3Warning: 
+examples/readme.py:16: MisleadingWarning: 
 (1, 1): No x-label.
 (1, 1): No y-label.
   fig.show()

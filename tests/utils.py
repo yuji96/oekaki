@@ -3,14 +3,14 @@ from pathlib import Path
 
 import numpy as np
 from matplotlib.testing.compare import calculate_rms
-from oekaki.validation import Mont3Warning
+from oekaki.validation import MisleadingWarning
 from PIL import Image
 
 
 def compare_figures(test_func):
 
     def wrapper():
-        warnings.simplefilter("ignore", Mont3Warning)
+        warnings.simplefilter("ignore", MisleadingWarning)
 
         expected_img, actual_img = map(convert_to_ndarray, test_func())
 
