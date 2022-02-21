@@ -2,9 +2,9 @@ import warnings
 from pathlib import Path
 
 import matplotlib
-import mont3
 import numpy as np
-from mont3.validation import Mont3Warning
+import oekaki
+from oekaki.validation import Mont3Warning
 from pytest import PytestUnknownMarkWarning
 
 from tests.utils import compare_figures
@@ -26,7 +26,7 @@ def test_single():
     ax.plot(x, np.sin(x))
     ax.set(xlabel="あ", ylabel="い")
 
-    actual = mont3.figure(strict=False)
+    actual = oekaki.figure(strict=False)
     actual.plot(x, np.sin(x))
     actual.set(xlabel="あ", ylabel="い")
     actual, _ = actual._draw()
@@ -40,7 +40,7 @@ def test_line():
     ax.plot(x, np.sin(x))
     ax.set(xlabel="あ", ylabel="い")
 
-    actual = mont3.figure(strict=False)
+    actual = oekaki.figure(strict=False)
     actual[1].plot(x, np.sin(x))
     actual[1].set(xlabel="あ", ylabel="い")
     actual, _ = actual._draw()
@@ -54,7 +54,7 @@ def test_table():
     ax.plot(x, np.sin(x))
     ax.set(xlabel="あ", ylabel="い")
 
-    actual = mont3.figure(strict=False)
+    actual = oekaki.figure(strict=False)
     actual[1, 1].plot(x, np.sin(x))
     actual[1, 1].set(xlabel="あ", ylabel="い")
     actual, _ = actual._draw()
@@ -68,7 +68,7 @@ def test_table_all_slice():
         ax.set(xlabel="あ", ylabel="い")
     axes[1, 1].plot(x, np.sin(x))
 
-    actual = mont3.figure(strict=False)
+    actual = oekaki.figure(strict=False)
     actual[:].set(xlabel="あ", ylabel="い")
     actual[1, 1].plot(x, np.sin(x))
     actual, axes = actual._draw()

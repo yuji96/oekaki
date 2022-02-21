@@ -11,6 +11,7 @@ def show(strict=True):
     plt.show()
 
 
+# TODO: rename
 class Mont3Warning(DeprecationWarning):
     pass
 
