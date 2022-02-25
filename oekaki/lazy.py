@@ -42,8 +42,8 @@ class LazyAxes(Axes):
 
 class figure:
 
-    def __init__(self, strict=True, **kwargs):
-        self.strict = strict
+    def __init__(self, level: str, **kwargs):
+        self.level = level
         self.kwargs = kwargs
 
         self.lazyaxes: list[tuple[Union[tuple, str], LazyAxes]] = []

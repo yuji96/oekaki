@@ -1,13 +1,14 @@
 import re
 import warnings
+from typing import Literal
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 
-def show(strict=True):
-    validate(plt.gcf(), strict)
+def show(level: str = "error"):
+    validate(plt.gcf(), level)
     plt.show()
 
 
@@ -17,12 +18,16 @@ class MisleadingWarning(DeprecationWarning):
 
 class validate:
 
-    def __init__(self, fig: Figure, strict):
+    def __init__(self, fig: Figure, level: Literal["error", "warning", "ignore"]):
+        if level not in {"error", "warning", "ignore"}:
+            raise ValueError(
+                'invalid level. choose from "error", "warning", or "ignore".')
+
         self.fig = fig
         self.warnings = []
 
-        if strict:
-            warnings.simplefilter('error', MisleadingWarning)
+        level = level.replace("warning", "always")
+        warnings.simplefilter(level, MisleadingWarning)
         self.validate()
 
     def validate(self):
