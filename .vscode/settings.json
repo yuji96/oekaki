@@ -1,0 +1,7 @@
+{
+  "python.linting.flake8Enabled": true,
+  "python.linting.flake8Args": [
+    "--ignore=F811 oekaki/lazy.py",
+    "--max-line-length=84"
+  ]
+}

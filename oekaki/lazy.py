@@ -1,10 +1,9 @@
-from __future__ import annotations
-
 from enum import Enum
+from typing import Union, overload
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
-from numpy import ndarray
+from plum import dispatch
 
 from .validation import validate
 
@@ -20,9 +19,7 @@ class LazyAxes(Axes):
 
     attrs = ["kind", "args", "kwargs", "__str__"]
 
-    def __init__(self, geo):
-        self.geo = geo
-
+    def __init__(self):
         self.kind: str = None
         self.args = []
         self.kwargs = {}
@@ -43,70 +40,46 @@ class LazyAxes(Axes):
         return f"<LazyAxes: {self.kind}>"
 
 
-class figure(Axes):
+class figure:
 
     def __init__(self, strict=True, **kwargs):
         self.strict = strict
         self.kwargs = kwargs
 
-        self.lazyaxes: list[tuple[tuple, LazyAxes]] = []
-        self.mode = Mode.NONE
-        self.rmax = 1
-        self.cmax = 1
+        self.lazyaxes: list[tuple[Union[tuple, str], LazyAxes]] = []
 
-    def __getitem__(self, key) -> LazyAxes:
-        # FIXME: raise error は後で
-        if not isinstance(key, tuple):
-            key = (slice(None), key)
-            # FIXME: 後で1次元だったら転置する。先にテスト書く
-        if len(key) != 2:
-            raise ValueError
-
-        r, c = key
-        if isinstance(r, int):
-            self.rmax = max(self.rmax, r + 1)
-        if isinstance(c, int):
-            self.rmax = max(self.rmax, 1)
-            self.cmax = max(self.cmax, c + 1)
-
-        ax = LazyAxes(geo=key)
-        self.lazyaxes.append((key, ax))
+    @overload
+    @dispatch
+    def __getitem__(self, label: str) -> LazyAxes:
+        ax = LazyAxes()
+        self.lazyaxes.append((label, ax))
         return ax
 
-    def __getattribute__(self, name):
-        if name not in dir(Axes):
-            return super().__getattribute__(name)
-        return getattr(self[:], name)
+    @dispatch
+    def __getitem__(self, key) -> None:
+        raise NotImplementedError
 
-    def _draw(self):
-        # TODO: データがないグラフは消す
+    def _draw(self, mosaic):
 
-        fig, axes = plt.subplots(self.rmax, self.cmax, squeeze=False, **self.kwargs)
+        fig = plt.figure(**self.kwargs)
+        ax_dict = fig.subplot_mosaic(mosaic)
 
         for key, lazy_ax in self.lazyaxes:
             if not lazy_ax.kind:
                 continue
 
-            sliced_axes = axes[key]
-            if isinstance(sliced_axes, ndarray):
-                for ax in sliced_axes.reshape(-1):
-                    getattr(ax, lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
-            else:
-                getattr(sliced_axes, lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
+            getattr(ax_dict[key], lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
 
         validate(fig, strict=self.strict)
-        return fig, axes
+        return fig
 
-    def show(self):
-        # self[:].grid(True)
-        self._draw()
+    def show(self, mosaic):
+        self._draw(mosaic)
         # TODO: これをオブジェクト指向的にやる方法って無いのかな
-        plt.tight_layout()
         plt.show()
 
     def save(self, filename):
         self._draw()
-        plt.tight_layout()
         plt.savefig(filename)
 
     def __str__(self):
