@@ -10,7 +10,7 @@ from pytest import PytestUnknownMarkWarning
 from tests.utils import compare_figures
 
 matplotlib.use('Agg')
-from matplotlib import pyplot  # noqa
+import matplotlib.pyplot as plt  # noqa
 
 warnings.simplefilter("ignore", (MisleadingWarning, PytestUnknownMarkWarning))
 
@@ -22,48 +22,56 @@ x = np.linspace(0, 2 * np.pi, 50)
 
 @compare_figures
 def test_single():
-    expected, ax = pyplot.subplots(1, 1)
-    ax.plot(x, np.sin(x))
-    ax.set(xlabel="あ", ylabel="い")
+    mosaic = "A"
+    expected = plt.figure()
+    ax_dict = expected.subplot_mosaic(mosaic)
+    ax_dict["A"].bar(["a", "b", "c"], [5, 7, 9])
 
     actual = oekaki.figure(strict=False)
-    actual.plot(x, np.sin(x))
-    actual.set(xlabel="あ", ylabel="い")
-    actual, _ = actual._draw()
+    actual["A"].bar(["a", "b", "c"], [5, 7, 9])
+    actual = actual._draw(mosaic)
     return expected, actual
 
 
 @compare_figures
 def test_line():
-    expected, axes = pyplot.subplots(1, 2)
-    ax = axes[1]
-    ax.plot(x, np.sin(x))
-    ax.set(xlabel="あ", ylabel="い")
+    mosaic = "AB"
+    expected = plt.figure()
+    ax_dict = expected.subplot_mosaic(mosaic)
+    ax_dict["A"].bar(["a", "b", "c"], [5, 7, 9])
+    ax_dict["B"].plot([1, 2, 3])
 
     actual = oekaki.figure(strict=False)
-    actual[1].plot(x, np.sin(x))
-    actual[1].set(xlabel="あ", ylabel="い")
-    actual, _ = actual._draw()
+    actual["A"].bar(["a", "b", "c"], [5, 7, 9])
+    actual["B"].plot([1, 2, 3])
+    actual = actual._draw(mosaic)
     return expected, actual
 
 
 @compare_figures
 def test_table():
-    expected, axes = pyplot.subplots(2, 2)
-    ax = axes[1, 1]
-    ax.plot(x, np.sin(x))
-    ax.set(xlabel="あ", ylabel="い")
+    mosaic = "AB\nCD"
+    rand = np.random.rand(100)
+
+    expected = plt.figure()
+    ax_dict = expected.subplot_mosaic(mosaic)
+    ax_dict["A"].bar(["a", "b", "c"], [5, 7, 9])
+    ax_dict["B"].plot([1, 2, 3])
+    ax_dict["C"].hist(rand)
+    ax_dict["D"].imshow([[1, 2], [2, 1]])
 
     actual = oekaki.figure(strict=False)
-    actual[1, 1].plot(x, np.sin(x))
-    actual[1, 1].set(xlabel="あ", ylabel="い")
-    actual, _ = actual._draw()
+    actual["A"].bar(["a", "b", "c"], [5, 7, 9])
+    actual["B"].plot([1, 2, 3])
+    actual["C"].hist(rand)
+    actual["D"].imshow([[1, 2], [2, 1]])
+    actual = actual._draw(mosaic)
     return expected, actual
 
 
 @compare_figures
-def test_table_all_slice():
-    expected, axes = pyplot.subplots(2, 2, squeeze=False)
+def _test_table_all_slice():
+    expected, axes = plt.subplots(2, 2, squeeze=False)
     for ax in axes.reshape(-1):
         ax.set(xlabel="あ", ylabel="い")
     axes[1, 1].plot(x, np.sin(x))
