@@ -62,15 +62,18 @@ class figure:
     def _draw(self, mosaic):
 
         fig = plt.figure(**self.kwargs)
-        ax_dict = fig.subplot_mosaic(mosaic)
+        ax_dict = fig.subplot_mosaic(convert_mosaic(mosaic))
 
         for key, lazy_ax in self.lazyaxes:
-            if not lazy_ax.kind:
-                continue
+            # if not lazy_ax.kind:
+            #     continue
 
-            getattr(ax_dict[key], lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
+            try:
+                getattr(ax_dict[key], lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
+            except KeyError:
+                pass
 
-        validate(fig, strict=self.strict)
+        validate(fig, level=self.level)
         return fig
 
     def show(self, mosaic):
@@ -84,3 +87,10 @@ class figure:
 
     def __str__(self):
         return f"<figure: {id(self)}>"
+
+
+def convert_mosaic(mosaic):
+    if isinstance(mosaic, str) and "|" in mosaic:
+        return [[cell.strip() for cell in line.split("|")]
+                for line in mosaic.splitlines()]
+    return mosaic
