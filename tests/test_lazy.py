@@ -4,6 +4,7 @@ from pathlib import Path
 import matplotlib
 import numpy as np
 import oekaki
+import seaborn as sns
 from oekaki.validation import MisleadingWarning
 from pytest import PytestUnknownMarkWarning
 
@@ -27,7 +28,7 @@ def test_single():
     ax_dict = expected.subplot_mosaic(mosaic)
     ax_dict["A"].bar(["a", "b", "c"], [5, 7, 9])
 
-    actual = oekaki.figure(strict=False)
+    actual = oekaki.figure(level="ignore")
     actual["A"].bar(["a", "b", "c"], [5, 7, 9])
     actual = actual._draw(mosaic)
     return expected, actual
@@ -41,7 +42,7 @@ def test_line():
     ax_dict["A"].bar(["a", "b", "c"], [5, 7, 9])
     ax_dict["B"].plot([1, 2, 3])
 
-    actual = oekaki.figure(strict=False)
+    actual = oekaki.figure(level="ignore")
     actual["A"].bar(["a", "b", "c"], [5, 7, 9])
     actual["B"].plot([1, 2, 3])
     actual = actual._draw(mosaic)
@@ -60,11 +61,26 @@ def test_table():
     ax_dict["C"].hist(rand)
     ax_dict["D"].imshow([[1, 2], [2, 1]])
 
-    actual = oekaki.figure(strict=False)
+    actual = oekaki.figure(level="ignore")
     actual["A"].bar(["a", "b", "c"], [5, 7, 9])
     actual["B"].plot([1, 2, 3])
     actual["C"].hist(rand)
     actual["D"].imshow([[1, 2], [2, 1]])
+    actual = actual._draw(mosaic)
+    return expected, actual
+
+
+@compare_figures
+def test_sns():
+    mosaic = "AB"
+    expected = plt.figure()
+    ax_dict = expected.subplot_mosaic(mosaic)
+    ax_dict["A"].bar(["a", "b", "c"], [5, 7, 9])
+    sns.lineplot(data=[1, 2, 3], ax=ax_dict["B"])
+
+    actual = oekaki.figure(level="ignore")
+    actual["A"].bar(["a", "b", "c"], [5, 7, 9])
+    actual["B"].sns.lineplot(data=[1, 2, 3])
     actual = actual._draw(mosaic)
     return expected, actual
 
@@ -76,7 +92,7 @@ def _test_table_all_slice():
         ax.set(xlabel="あ", ylabel="い")
     axes[1, 1].plot(x, np.sin(x))
 
-    actual = oekaki.figure(strict=False)
+    actual = oekaki.figure(level="ignore")
     actual[:].set(xlabel="あ", ylabel="い")
     actual[1, 1].plot(x, np.sin(x))
     actual, axes = actual._draw()
