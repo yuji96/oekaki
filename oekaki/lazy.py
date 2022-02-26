@@ -1,5 +1,4 @@
-from enum import Enum
-from typing import Union, overload
+from typing import Hashable, Tuple, overload
 
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
@@ -8,36 +7,47 @@ from plum import dispatch
 from .validation import validate
 
 
-class Mode(Enum):
-    NONE = -1
-    SINGLE = 0
-    LINE = 1
-    TABLE = 2
-
-
 class LazyAxes(Axes):
 
-    attrs = ["kind", "args", "kwargs", "__str__"]
+    attrs = ["attr", "next", "args", "kwargs"]
+    methods = ["reverse"]
 
-    def __init__(self):
-        self.kind: str = None
+    def __init__(self, attr=None):
+        self.attr = attr
+        self.next = None
         self.args = []
         self.kwargs = {}
 
-    def __getattribute__(self, name: str):
-        if name == "attrs" or name in self.attrs:
-            return super().__getattribute__(name)
+    def __getattribute__(self, attr):
+        if attr in ["attrs", "methods"]:
+            return super().__getattribute__(attr)
+        if attr in self.attrs + self.methods:
+            return super().__getattribute__(attr)
 
-        def store(*args, **kwargs):
-            self.kind = name
-            self.args = args
-            self.kwargs = kwargs
+        if self.attr is None:
+            self.attr = attr
+            return self
+        else:
+            self.next = LazyAxes(attr)
+            return self.next
 
-        # TODO: <store:> って表示されるの直したい
-        return store
+    def __call__(self, *args, **kwargs):
+        self.is_called = True
+        self.args = args
+        self.kwargs = kwargs
+        return self
 
     def __str__(self):
-        return f"<LazyAxes: {self.kind}>"
+        return f"<LazyAxes: {self.attr}>"
+
+    def reverse(self, ax):
+        lazy_ax = self
+        while lazy_ax:
+            ax = getattr(ax, lazy_ax.attr)
+            if lazy_ax.args or lazy_ax.kwargs:
+                ax = ax(*lazy_ax.args, **lazy_ax.kwargs)
+            lazy_ax = lazy_ax.next
+        return ax
 
 
 class figure:
@@ -46,7 +56,7 @@ class figure:
         self.level = level
         self.kwargs = kwargs
 
-        self.lazyaxes: list[tuple[Union[tuple, str], LazyAxes]] = []
+        self.lazyaxes: list[Tuple[Hashable, LazyAxes]] = []
 
     @overload
     @dispatch
@@ -65,11 +75,8 @@ class figure:
         ax_dict = fig.subplot_mosaic(convert_mosaic(mosaic))
 
         for key, lazy_ax in self.lazyaxes:
-            # if not lazy_ax.kind:
-            #     continue
-
             try:
-                getattr(ax_dict[key], lazy_ax.kind)(*lazy_ax.args, **lazy_ax.kwargs)
+                lazy_ax.reverse(ax_dict[key])
             except KeyError:
                 pass
 
