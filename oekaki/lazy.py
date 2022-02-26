@@ -1,16 +1,24 @@
+import inspect
 from typing import Hashable, Tuple, overload
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 from matplotlib.axes import Axes
 from plum import dispatch
 
 from .validation import validate
 
+support_seaborn = []
+for name in dir(sns):
+    func = getattr(sns, name)
+    if callable(func) and "ax" in inspect.signature(func).parameters:
+        support_seaborn.append(name)
+
 
 class LazyAxes(Axes):
 
     attrs = ["attr", "next", "args", "kwargs"]
-    methods = ["reverse"]
+    methods = ["reverse", "sns", "seaborn"]
 
     def __init__(self, attr=None):
         self.attr = attr
@@ -43,11 +51,33 @@ class LazyAxes(Axes):
     def reverse(self, ax):
         lazy_ax = self
         while lazy_ax:
-            ax = getattr(ax, lazy_ax.attr)
-            if lazy_ax.args or lazy_ax.kwargs:
-                ax = ax(*lazy_ax.args, **lazy_ax.kwargs)
+            if lazy_ax.attr == "seaborn":
+                lazy_ax = lazy_ax.next
+                func = lazy_ax.attr
+                if func not in support_seaborn:
+                    raise ValueError(
+                        f"{func} is not suppoted. choose form {support_seaborn}")
+
+                lazy_ax.kwargs["ax"] = ax
+                ax = getattr(sns, func)(*lazy_ax.args, **lazy_ax.kwargs)
+            else:
+                ax = getattr(ax, lazy_ax.attr)
+                if lazy_ax.args or lazy_ax.kwargs:
+                    ax = ax(*lazy_ax.args, **lazy_ax.kwargs)
             lazy_ax = lazy_ax.next
         return ax
+
+    @property
+    def seaborn(self) -> sns:
+        if sns is None:
+            raise ModuleNotFoundError("No module named 'seaborn'.")
+
+        self.attr = "seaborn"
+        return self
+
+    @property
+    def sns(self, *args, **kwargs) -> sns:
+        return self.seaborn(*args, **kwargs)
 
 
 class figure:
