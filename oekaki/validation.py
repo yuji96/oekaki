@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
+import oekaki
+
+UNIT_BRACKET = "(", ")"
+
 
 def show(level: str = "error"):
     validate(plt.gcf(), level)
@@ -37,23 +41,19 @@ class validate:
             self.validate_labels(ax)
         if self.warnings:
             warnings.warn(
-                "".join(f'\n{w["geo"]}: {w["msg"]}' for w in self.warnings),
+                "".join(f'\n{w["label"]}: {w["msg"]}' for w in self.warnings),
                 MisleadingWarning, stacklevel=5)
 
     def validate_labels(self, ax: Axes):
-        # TODO: 関数の外側にする？
-        geo = self.calc_geometry(ax)
+        _1, _2 = oekaki.UNIT_BRACKET
+        label = ax.get_label()
+
         for var in ["x", "y"]:
             target = getattr(ax, f"get_{var}label")()
             if not target:
-                self.warnings.append({"geo": geo, "msg": f"No {var}-label."})
-            elif not re.search(r'\[.*\]', target):
+                self.warnings.append({"label": label, "msg": f"No {var}-label."})
+            elif not re.search(f".*\\{_1}.*\\{_2}", target):
                 # TODO: English
-                self.warnings.append({"geo": geo, "msg": "単位がない"})
+                self.warnings.append({"label": label, "msg": f"No {var}-unit."})
 
-            getattr(ax, f"set_{var}label")(target.replace("[]", ""))
-
-    @staticmethod
-    def calc_geometry(ax):
-        _, n_cols, i, _ = ax.get_subplotspec().get_geometry()
-        return divmod(i, n_cols)
+            getattr(ax, f"set_{var}label")(target.replace(f"{_1}{_2}", ""))
