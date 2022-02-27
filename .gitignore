@@ -1,6 +1,6 @@
 # my settings
 failed_cases
-
+dist_test/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -15,7 +15,6 @@ __pycache__/
 build/
 develop-eggs/
 dist/
-test_dist/
 downloads/
 eggs/
 .eggs/
