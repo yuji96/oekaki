@@ -20,7 +20,9 @@ for name in dir(sns):
 class LazyAxes(Axes):
 
     attrs = ["attr", "next", "args", "kwargs"]
-    methods = ["reverse", "sns", "seaborn"]
+    methods = [
+        "reverse", "sns", "seaborn", "_ipython_canary_method_should_not_exist_"
+    ]
 
     def __init__(self, attr=None):
         self.attr = attr
@@ -49,6 +51,12 @@ class LazyAxes(Axes):
 
     def __str__(self):
         return f"<LazyAxes: {self.attr}>"
+
+    def __repr__(self):
+        return f"<LazyAxes: {self.attr}>"
+
+    def __iter__(self):
+        yield self
 
     def reverse(self, ax):
         lazy_ax = self
