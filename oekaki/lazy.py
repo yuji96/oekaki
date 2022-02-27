@@ -6,7 +6,6 @@ from typing import overload
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.axes import Axes
-from plum import dispatch
 
 from .validation import validate
 
@@ -105,17 +104,13 @@ class figure:
         self.lazyattrs.append(fig_attr)
         return fig_attr
 
-    @overload
-    @dispatch
     def __getitem__(self, label: str) -> LazyAxes:
+        if not isinstance(label, str):
+            raise KeyError("support str only.")
         ax = LazyAxes()
         self.keys.append(label)
         self.lazyaxes.append(ax)
         return ax
-
-    @dispatch
-    def __getitem__(self, key) -> None:
-        raise NotImplementedError("only support str type.")
 
     def draw(self, mosaic):
         mosaic = convert_mosaic(mosaic)
