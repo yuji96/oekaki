@@ -98,11 +98,11 @@ class figure:
 
         self.keys: list[str] = []
         self.lazyaxes: list[LazyAxes] = []
-        self.fig_attrs: list[LazyAxes] = []
+        self.lazyattrs: list[LazyAxes] = []
 
     def __getattr__(self, name):
         fig_attr = LazyAxes(name)
-        self.fig_attrs.append(fig_attr)
+        self.lazyattrs.append(fig_attr)
         return fig_attr
 
     @overload
@@ -128,7 +128,7 @@ class figure:
             for match_key in filter(re.compile(key).fullmatch, chain):
                 lazy_ax.reverse(ax_dict[match_key])
 
-        for fig_attr in self.fig_attrs:
+        for fig_attr in self.lazyattrs:
             fig_attr.reverse(fig)
 
         validate(fig, level=self.level)
