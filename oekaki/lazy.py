@@ -92,7 +92,7 @@ class LazyAxes(Axes):
 
 class figure:
 
-    def __init__(self, level: str, **kwargs):
+    def __init__(self, level: str = "warning", **kwargs):
         self.level = level
         self.kwargs = kwargs
 
@@ -119,13 +119,13 @@ class figure:
 
     def draw(self, mosaic):
         mosaic = convert_mosaic(mosaic)
-        chain = list(itertools.chain(*mosaic))
+        chain = set(itertools.chain(*mosaic))
 
         fig = plt.figure(**self.kwargs)
         ax_dict = fig.subplot_mosaic(mosaic)
 
         for key, lazy_ax in zip(self.keys, self.lazyaxes):
-            for match_key in filter(re.compile(key).fullmatch, chain):
+            for match_key in filter(re.compile(key).search, chain):
                 lazy_ax.reverse(ax_dict[match_key])
 
         for fig_attr in self.lazyattrs:
