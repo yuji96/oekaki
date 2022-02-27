@@ -1,5 +1,7 @@
 import inspect
-from typing import Hashable, Tuple, overload
+import itertools
+import re
+from typing import overload
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -86,29 +88,31 @@ class figure:
         self.level = level
         self.kwargs = kwargs
 
-        self.lazyaxes: list[Tuple[Hashable, LazyAxes]] = []
+        self.keys: list[str] = []
+        self.lazyaxes: list[LazyAxes] = []
 
     @overload
     @dispatch
     def __getitem__(self, label: str) -> LazyAxes:
         ax = LazyAxes()
-        self.lazyaxes.append((label, ax))
+        self.keys.append(label)
+        self.lazyaxes.append(ax)
         return ax
 
     @dispatch
     def __getitem__(self, key) -> None:
-        raise NotImplementedError
+        raise NotImplementedError("only support str type.")
 
     def _draw(self, mosaic):
+        mosaic = convert_mosaic(mosaic)
+        chain = list(itertools.chain(*mosaic))
 
         fig = plt.figure(**self.kwargs)
-        ax_dict = fig.subplot_mosaic(convert_mosaic(mosaic))
+        ax_dict = fig.subplot_mosaic(mosaic)
 
-        for key, lazy_ax in self.lazyaxes:
-            try:
-                lazy_ax.reverse(ax_dict[key])
-            except KeyError:
-                pass
+        for key, lazy_ax in zip(self.keys, self.lazyaxes):
+            for match_key in filter(re.compile(key).fullmatch, chain):
+                lazy_ax.reverse(ax_dict[match_key])
 
         validate(fig, level=self.level)
         return fig
