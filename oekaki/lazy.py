@@ -90,6 +90,12 @@ class figure:
 
         self.keys: list[str] = []
         self.lazyaxes: list[LazyAxes] = []
+        self.fig_attrs: list[LazyAxes] = []
+
+    def __getattr__(self, name):
+        fig_attr = LazyAxes(name)
+        self.fig_attrs.append(fig_attr)
+        return fig_attr
 
     @overload
     @dispatch
@@ -103,7 +109,7 @@ class figure:
     def __getitem__(self, key) -> None:
         raise NotImplementedError("only support str type.")
 
-    def _draw(self, mosaic):
+    def draw(self, mosaic):
         mosaic = convert_mosaic(mosaic)
         chain = list(itertools.chain(*mosaic))
 
@@ -114,16 +120,19 @@ class figure:
             for match_key in filter(re.compile(key).fullmatch, chain):
                 lazy_ax.reverse(ax_dict[match_key])
 
+        for fig_attr in self.fig_attrs:
+            fig_attr.reverse(fig)
+
         validate(fig, level=self.level)
         return fig
 
     def show(self, mosaic):
-        self._draw(mosaic)
+        self.draw(mosaic)
         # TODO: これをオブジェクト指向的にやる方法って無いのかな
         plt.show()
 
     def save(self, filename):
-        self._draw()
+        self.draw()
         plt.savefig(filename)
 
     def __str__(self):
